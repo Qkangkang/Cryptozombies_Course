@@ -1,8 +1,8 @@
 pragma solidity ^0.4.19;
 
-import "./zombiefactory.sol"; // 상속을 위한 import
+import "./zombiefactory.sol";
 
-contract KittyInterface { // 외부 contract을 사용하기 위한 interface 
+contract KittyInterface {
   function getKitty(uint256 _id) external view returns (
     bool isGestating,
     bool isReady,
@@ -19,18 +19,31 @@ contract KittyInterface { // 외부 contract을 사용하기 위한 interface
 
 contract ZombieFeeding is ZombieFactory {
 
-  address ckAddress = 0x06012c8cf97BEaD5deAe237070F9587f8E7A266d; // 외부 contract 주소
-  KittyInterface kittyContract = KittyInterface(ckAddress);
+  KittyInterface kittyContract;
 
-  function feedAndMultiply(uint _zombieId, uint _targetDna, string _species) public {
+  function setKittyContractAddress(address _address) external onlyOwner {
+    kittyContract = KittyInterface(_address);
+  }
+
+  function _triggerCooldown(Zombie storage _zombie) internal {
+    _zombie.readyTime = uint32(now + cooldownTime);
+  }
+
+  function _isReady(Zombie storage _zombie) internal view returns (bool) {
+      return (_zombie.readyTime <= now);
+  }
+
+  function feedAndMultiply(uint _zombieId, uint _targetDna, string _species) internal {
     require(msg.sender == zombieToOwner[_zombieId]);
     Zombie storage myZombie = zombies[_zombieId];
+    require(_isReady(myZombie));
     _targetDna = _targetDna % dnaModulus;
     uint newDna = (myZombie.dna + _targetDna) / 2;
-    if(keccak256(_species) == keccak256("kitty")){ // 문자열 비교를 위해 keccak256 사용
+    if (keccak256(_species) == keccak256("kitty")) {
       newDna = newDna - newDna % 100 + 99;
     }
     _createZombie("NoName", newDna);
+    _triggerCooldown(myZombie);
   }
 
   function feedOnKitty(uint _zombieId, uint _kittyId) public {
