@@ -7,6 +7,7 @@ import "./safemath.sol";
 /// @title 좀비 소유권 전송을 관리하는 컨트랙트
 /// @author KimSangHyeok
 /// @dev OpenZeppelin의 ERC721 표준 초안 구현을 따름
+/// commit for syntax highlighting Solidity
 
 contract ZombieOwnership is ZombieAttack, ERC721 {
 
